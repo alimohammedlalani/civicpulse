@@ -75,11 +75,16 @@ export default function LandingPage() {
               </p>
               <div style={{ display: 'flex', gap: '16px', marginBottom: '40px', flexWrap: 'wrap' }}>
                 <Button size="lg" onClick={() => navigate('/citizen/submit')} icon={ArrowRight}>
-                  Get Help Now
+                   Get Help Now
                 </Button>
-                <Button variant="secondary" size="lg" onClick={() => navigate('/volunteer/login')}>
-                  I'm a Volunteer
-                </Button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button variant="secondary" size="lg" onClick={() => navigate('/volunteer/login')}>
+                    Volunteer Login
+                  </Button>
+                  <Button variant="outline" size="lg" onClick={() => navigate('/volunteer/signup')}>
+                    Sign Up
+                  </Button>
+                </div>
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '24px', fontSize: '14px', fontWeight: 500, color: T.textSecondary, flexWrap: 'wrap' }}>

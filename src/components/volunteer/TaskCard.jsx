@@ -57,7 +57,7 @@ export default function TaskCard({ task, onAccept, onDecline, onResolve, onView 
               <div style={{ flex: 1 }}><Button size="sm" fullWidth variant="secondary" onClick={() => onDecline(task.id)}>Decline</Button></div>
             </>
           )}
-          {task.status === 'accepted' && (
+          {task.status === 'active' && (
             <div style={{ flex: 1 }}><Button size="sm" fullWidth icon={Check} onClick={() => onResolve(task)} style={{ backgroundColor: T.success, color: T.white }}>Mark as Resolved</Button></div>
           )}
         </div>

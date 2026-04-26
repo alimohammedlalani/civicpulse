@@ -17,11 +17,31 @@ export default function VolunteerTaskPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user } = useSession()
-  const { tasks, loading } = useVolunteerTasks(user?.uid)
-  
+  const [task, setTask] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [showResolution, setShowResolution] = useState(searchParams.get('resolve') === 'true')
 
-  const task = useMemo(() => tasks.find(t => t.id === id), [tasks, id])
+  useEffect(() => {
+    async function loadTask() {
+      try {
+        setLoading(true)
+        const data = await import('../../adapters/volunteerAdapter').then(m => m.fetchTaskById(id))
+        // We need to wrap it in the expected match-like structure if it's just the need
+        // In this app, the 'task' is often the 'need' document itself once assigned
+        if (data) {
+          setTask({
+            ...data,
+            need: data // For compatibility with TaskDetailPanel which expects task.need
+          })
+        }
+      } catch (err) {
+        console.error('Failed to load task:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadTask()
+  }, [id])
 
   // Handle errors / missing tasks
   if (loading) {

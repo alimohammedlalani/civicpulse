@@ -66,8 +66,10 @@ export default function RoleSelectionPage() {
               bgColor={T.successLight}
               title="I want to help"
               desc="View needs in your area and volunteer your time and skills."
-              actionText="Login / Register"
-              onClick={() => navigate('/volunteer/login')}
+              actions={[
+                { label: 'Log In', onClick: () => navigate('/volunteer/login') },
+                { label: 'Sign Up', onClick: () => navigate('/volunteer/signup'), variant: 'primary' }
+              ]}
             />
 
             <RoleCard
@@ -87,7 +89,7 @@ export default function RoleSelectionPage() {
   )
 }
 
-function RoleCard({ icon: Icon, color, bgColor, title, desc, actionText, onClick }) {
+function RoleCard({ icon: Icon, color, bgColor, title, desc, actionText, onClick, actions }) {
   const [hover, setHover] = useState(false)
 
   return (
@@ -102,7 +104,7 @@ function RoleCard({ icon: Icon, color, bgColor, title, desc, actionText, onClick
           border: `1px solid ${hover ? color : T.border}`,
           padding: '24px',
           height: '100%',
-          cursor: 'pointer',
+          cursor: onClick ? 'pointer' : 'default',
           display: 'flex',
           flexDirection: 'column',
           transition: 'all 0.2s ease',
@@ -126,12 +128,32 @@ function RoleCard({ icon: Icon, color, bgColor, title, desc, actionText, onClick
           {desc}
         </p>
         
-        <div style={{
-          display: 'flex', alignItems: 'center', fontSize: '14px', fontWeight: 600, color: color,
-          opacity: hover ? 1 : 0, transition: 'opacity 0.2s ease'
-        }}>
-          {actionText} <ArrowRight size={16} style={{ marginLeft: '4px' }} />
-        </div>
+        {actions ? (
+          <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+            {actions.map((action, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); action.onClick() }}
+                style={{
+                  flex: 1, padding: '10px', borderRadius: T.radiusMd, fontSize: '14px', fontWeight: 600,
+                  cursor: 'pointer', transition: '0.2s',
+                  backgroundColor: action.variant === 'primary' ? color : 'transparent',
+                  color: action.variant === 'primary' ? 'white' : color,
+                  border: `1px solid ${color}`
+                }}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div style={{
+            display: 'flex', alignItems: 'center', fontSize: '14px', fontWeight: 600, color: color,
+            opacity: hover ? 1 : 0, transition: 'opacity 0.2s ease'
+          }}>
+            {actionText} <ArrowRight size={16} style={{ marginLeft: '4px' }} />
+          </div>
+        )}
       </div>
     </motion.div>
   )

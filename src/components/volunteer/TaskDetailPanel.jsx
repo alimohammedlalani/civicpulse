@@ -67,7 +67,7 @@ export default function TaskDetailPanel({ task, onAccept, onDecline, onResolve }
           )}
         </div>
 
-        {task.status === 'accepted' && (
+        {task.status === 'active' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '32px' }}>
              <h3 style={{ fontWeight: 700, fontSize: '14px', color: T.primary, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Info size={16} /> Citizen Contact
@@ -101,7 +101,7 @@ export default function TaskDetailPanel({ task, onAccept, onDecline, onResolve }
             <div style={{ flex: 1 }}><Button fullWidth onClick={() => onAccept(task.id)} icon={Check}>Accept Task</Button></div>
           </div>
         )}
-        {task.status === 'accepted' && (
+        {task.status === 'active' && (
           <Button fullWidth size="lg" onClick={() => onResolve(task)} icon={Check} style={{ backgroundColor: T.success, color: T.white }}>
             Submit Resolution
           </Button>

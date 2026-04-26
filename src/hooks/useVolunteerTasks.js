@@ -19,7 +19,7 @@ export function useVolunteerTasks(volunteerId) {
   }, [volunteerId])
 
   const pending = tasks.filter(t => t.status === 'pending')
-  const active = tasks.filter(t => t.status === 'accepted')
+  const active = tasks.filter(t => t.status === 'active')
   const completed = tasks.filter(t => t.status === 'resolved')
 
   return { tasks, pending, active, completed, loading }

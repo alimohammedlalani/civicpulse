@@ -26,6 +26,12 @@ export default function Button({
           background: isHovered ? '#F0F2F5' : 'transparent',
           color: '#6B7280',
         }
+      case 'outline':
+        return {
+          background: isHovered ? '#F0F2F5' : 'transparent',
+          color: '#0057FF',
+          border: `1px solid ${isHovered ? '#0040CC' : '#0057FF'}`,
+        }
       case 'danger':
         return {
           background: isHovered ? '#FF4444' : '#FFF0F0',

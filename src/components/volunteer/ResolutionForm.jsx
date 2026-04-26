@@ -84,6 +84,12 @@ export default function ResolutionForm({ task, onSubmit, onCancel }) {
         placeholder="E.g., Medical kit, transportation..."
       />
 
+      <Textarea 
+        {...register('notes')}
+        label="Final Notes (optional)"
+        placeholder="Any additional information..."
+      />
+
       <div style={{ display: 'flex', gap: '12px', paddingTop: '16px', marginTop: '24px', borderTop: `1px solid ${T.border}` }}>
         <div style={{ flex: 1 }}><Button type="button" variant="ghost" onClick={onCancel} fullWidth>Cancel</Button></div>
         <div style={{ flex: 1 }}><Button type="submit" loading={loading} icon={CheckCircle} fullWidth style={{ backgroundColor: T.success, color: T.white }}>Complete Task</Button></div>

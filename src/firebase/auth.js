@@ -1,7 +1,19 @@
-import { signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth'
 import { auth, isFirebaseConfigured } from './config'
 
 const googleProvider = isFirebaseConfigured ? new GoogleAuthProvider() : null
+
+export async function signupWithEmail(email, password) {
+  if (!isFirebaseConfigured) {
+    return {
+      uid: 'demo-user-' + Date.now(),
+      email,
+      displayName: email.split('@')[0],
+    }
+  }
+  const cred = await createUserWithEmailAndPassword(auth, email, password)
+  return cred.user
+}
 
 export async function loginWithEmail(email, password) {
   if (!isFirebaseConfigured) {

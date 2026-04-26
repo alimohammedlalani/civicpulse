@@ -18,8 +18,11 @@ const CitizenHomePage = lazy(() => import('./pages/citizen/CitizenHomePage'))
 const CitizenSubmitPage = lazy(() => import('./pages/citizen/CitizenSubmitPage'))
 const CitizenTrackPage = lazy(() => import('./pages/citizen/CitizenTrackPage'))
 const VolunteerLoginPage = lazy(() => import('./pages/volunteer/VolunteerLoginPage'))
+const VolunteerSignupPage = lazy(() => import('./pages/volunteer/VolunteerSignupPage'))
+const VolunteerOnboardingPage = lazy(() => import('./pages/volunteer/VolunteerOnboardingPage'))
 const VolunteerDashboardPage = lazy(() => import('./pages/volunteer/VolunteerDashboardPage'))
 const VolunteerTaskPage = lazy(() => import('./pages/volunteer/VolunteerTaskPage'))
+const VolunteerProfilePage = lazy(() => import('./pages/volunteer/VolunteerProfilePage'))
 const CoordinatorLoginPage = lazy(() => import('./pages/coordinator/CoordinatorLoginPage'))
 const CoordinatorDashboardPage = lazy(() => import('./pages/coordinator/CoordinatorDashboardPage'))
 const CoordinatorReviewPage = lazy(() => import('./pages/coordinator/CoordinatorReviewPage'))
@@ -27,7 +30,7 @@ const CoordinatorNeedPage = lazy(() => import('./pages/coordinator/CoordinatorNe
 
 // PROTECTED ROUTE GUARD
 function RequireAuth({ allowedRole }) {
-  const { isAuthenticated, role, loading } = useSession()
+  const { isAuthenticated, role, user, loading } = useSession()
   const location = useLocation()
 
   if (loading) return <LoadingFallback />
@@ -41,6 +44,11 @@ function RequireAuth({ allowedRole }) {
     // If they have the wrong role, redirect to their own dashboard
     const dashboardPath = role === 'volunteer' ? '/volunteer/dashboard' : '/coordinator/dashboard'
     return <Navigate to={dashboardPath} replace />
+  }
+
+  // SPECIAL CASE: Volunteer onboarding check
+  if (role === 'volunteer' && !user?.onboarding_completed && location.pathname !== '/volunteer/onboarding') {
+    return <Navigate to="/volunteer/onboarding" replace />
   }
 
   return <Outlet />
@@ -58,9 +66,12 @@ function PublicOnlyRoute() {
     const isCoordinatorPath = location.pathname.includes('coordinator')
     
     // Only redirect if the authenticated user is visiting the login page for their OWN role.
-    // If a coordinator visits the volunteer login, they should be able to see it (and potentially switch).
-    if (role === 'volunteer' && isVolunteerPath) return <Navigate to="/volunteer/dashboard" replace />
-    if (role === 'coordinator' && isCoordinatorPath) return <Navigate to="/coordinator/dashboard" replace />
+    if (role === 'volunteer' && isVolunteerPath) {
+      return <Navigate to="/volunteer/dashboard" replace />
+    }
+    if (role === 'coordinator' && isCoordinatorPath) {
+      return <Navigate to="/coordinator/dashboard" replace />
+    }
   }
 
   return <Outlet />
@@ -100,13 +111,16 @@ function AppRoutes() {
 
       <Route element={<PublicOnlyRoute />}>
         <Route path="/volunteer/login" element={<Suspense fallback={<LoadingFallback />}><VolunteerLoginPage /></Suspense>} />
+        <Route path="/volunteer/signup" element={<Suspense fallback={<LoadingFallback />}><VolunteerSignupPage /></Suspense>} />
         <Route path="/coordinator/login" element={<Suspense fallback={<LoadingFallback />}><CoordinatorLoginPage /></Suspense>} />
       </Route>
 
       <Route element={<RequireAuth allowedRole="volunteer" />}>
+        <Route path="/volunteer/onboarding" element={<Suspense fallback={<LoadingFallback />}><VolunteerOnboardingPage /></Suspense>} />
         <Route element={<ShellLayout roleLabel="Volunteer" />}>
           <Route path="/volunteer/dashboard" element={<VolunteerDashboardPage />} />
           <Route path="/volunteer/tasks/:id" element={<VolunteerTaskPage />} />
+          <Route path="/volunteer/profile" element={<VolunteerProfilePage />} />
         </Route>
       </Route>
 

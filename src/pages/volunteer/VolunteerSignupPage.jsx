@@ -2,45 +2,45 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, LogIn } from 'lucide-react'
+import { ArrowLeft, UserPlus } from 'lucide-react'
 import PageTransition from '../../components/layout/PageTransition'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
-import { loginSchema } from '../../utils/validators'
-import { loginWithEmail, loginWithGoogle } from '../../firebase/auth'
+import { signupSchema } from '../../utils/validators'
+import { signupWithEmail, loginWithGoogle } from '../../firebase/auth'
 import { useSession } from '../../hooks/useSession'
 import { showError, showSuccess } from '../../components/ui/Toast'
-import { fetchVolunteerProfile } from '../../adapters/volunteerAdapter'
+import { createVolunteerProfile, fetchVolunteerProfile } from '../../adapters/volunteerAdapter'
 import { T } from '../../styles/tokens'
 
-export default function VolunteerLoginPage() {
+export default function VolunteerSignupPage() {
   const navigate = useNavigate()
   const { setSession, isDemoMode } = useSession()
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
   const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(signupSchema),
   })
 
-  const handleLoginSuccess = async (user) => {
+  const handleSignupSuccess = async (user, name) => {
     try {
-      const profile = await fetchVolunteerProfile(user.uid)
-      const fullUser = { ...user, ...profile }
+      // Create initial profile
+      const profile = await createVolunteerProfile(user.uid, {
+        name: name || user.displayName || 'Volunteer',
+        email: user.email,
+      })
+      
       setSession({ 
         role: 'volunteer', 
-        user: fullUser
+        user: { ...user, ...profile } 
       })
-      showSuccess('Welcome back!')
       
-      // Determine where to go based on onboarding status
-      if (fullUser.onboarding_completed) {
-        navigate('/volunteer/dashboard', { replace: true })
-      } else {
-        navigate('/volunteer/onboarding', { replace: true })
-      }
+      showSuccess('Account created! Let\'s complete your profile.')
+      navigate('/volunteer/onboarding', { replace: true })
     } catch (err) {
-      showError('Failed to fetch profile data.')
+      console.error('Profile creation error:', err)
+      showError('Failed to create volunteer profile.')
       setLoading(false)
       setGoogleLoading(false)
     }
@@ -49,22 +49,37 @@ export default function VolunteerLoginPage() {
   const onSubmit = async (data) => {
     try {
       setLoading(true)
-      const user = await loginWithEmail(data.email, data.password)
-      await handleLoginSuccess(user)
+      const user = await signupWithEmail(data.email, data.password)
+      await handleSignupSuccess(user, data.name)
     } catch (err) {
-      console.error('Login error:', err)
-      showError(err.message || 'Invalid email or password.')
+      console.error('Signup error:', err)
+      showError(err.message || 'Failed to create account.')
       setLoading(false)
     }
   }
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignup = async () => {
     try {
       setGoogleLoading(true)
       const user = await loginWithGoogle()
-      await handleLoginSuccess(user)
+      
+      // Check if profile already exists (in case they use Google to "signup" but already have an account)
+      const existingProfile = await fetchVolunteerProfile(user.uid)
+      if (existingProfile) {
+        setSession({ 
+          role: 'volunteer', 
+          user: { ...user, ...existingProfile } 
+        })
+        if (existingProfile.onboarding_completed) {
+          navigate('/volunteer/dashboard', { replace: true })
+        } else {
+          navigate('/volunteer/onboarding', { replace: true })
+        }
+      } else {
+        await handleSignupSuccess(user)
+      }
     } catch (err) {
-      console.error('Google login error:', err)
+      console.error('Google signup error:', err)
       if (err.code !== 'auth/popup-closed-by-user') {
         showError('Google sign in failed.')
       }
@@ -77,74 +92,74 @@ export default function VolunteerLoginPage() {
       <div style={{ backgroundColor: T.surface2, minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 16px' }}>
         <div style={{ width: '100%', maxWidth: '448px', margin: '0 auto' }}>
           <button 
-            onClick={() => navigate('/start')} 
+            onClick={() => navigate('/volunteer/login')} 
             style={{
               display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500,
               color: T.textSecondary, cursor: 'pointer', background: 'none', border: 'none', marginBottom: '32px'
             }}
           >
-            <ArrowLeft size={16} /> Back
+            <ArrowLeft size={16} /> Back to Login
           </button>
 
           <div style={{ backgroundColor: T.surface, borderRadius: T.radiusXl, boxShadow: T.shadowLg, border: `1px solid ${T.border}`, padding: '32px' }}>
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
               <div style={{
-                width: '48px', height: '48px', backgroundColor: T.successLight, color: T.success, borderRadius: '50%',
+                width: '48px', height: '48px', backgroundColor: T.primaryLight, color: T.primary, borderRadius: '50%',
                 margin: '0 auto 16px auto', display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}>
-                <svg viewBox="0 0 32 32" fill="none" style={{ width: '24px', height: '24px' }}>
-                  <circle cx="16" cy="16" r="14" fill="currentColor"/>
-                  <path d="M16 8C11.58 8 8 11.58 8 16s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" fill="white"/>
-                  <circle cx="16" cy="16" r="2.5" fill="white"/>
-                  <path d="M16 10v4" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
+                <UserPlus size={24} />
               </div>
-              <h2 style={{ fontFamily: T.fontDisplay, fontSize: '24px', fontWeight: 700, color: T.textPrimary }}>Welcome back, volunteer.</h2>
-              <p style={{ fontSize: '14px', color: T.textSecondary, marginTop: '8px' }}>Sign in to view your tasks and help your community.</p>
+              <h2 style={{ fontFamily: T.fontDisplay, fontSize: '24px', fontWeight: 700, color: T.textPrimary }}>Join CivicPulse</h2>
+              <p style={{ fontSize: '14px', color: T.textSecondary, marginTop: '8px' }}>Become a volunteer and help your community during emergencies.</p>
             </div>
 
             {isDemoMode && (
               <div style={{ backgroundColor: T.warningLight, color: T.warning, padding: '12px', borderRadius: T.radiusMd, fontSize: '12px', fontWeight: 500, marginBottom: '24px', border: `1px solid rgba(255, 149, 0, 0.2)` }}>
-                Demo mode active. Use any email/password to sign in as a mock volunteer.
+                Demo mode active. Profiles will be stored in temporary memory.
               </div>
             )}
 
             <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <Input 
+                {...register('name')}
+                label="Full Name"
+                placeholder="John Doe"
+                error={errors.name?.message}
+              />
+              <Input 
                 {...register('email')}
                 label="Email address"
                 type="email"
-                autoComplete="email"
+                placeholder="john@example.com"
                 error={errors.email?.message}
               />
               <Input 
                 {...register('password')}
                 label="Password"
                 type="password"
-                autoComplete="current-password"
+                placeholder="••••••••"
                 error={errors.password?.message}
               />
+              <Input 
+                {...register('confirmPassword')}
+                label="Confirm Password"
+                type="password"
+                placeholder="••••••••"
+                error={errors.confirmPassword?.message}
+              />
               
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '14px', marginBottom: '8px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input type="checkbox" style={{ accentColor: T.primary, width: '16px', height: '16px' }} />
-                  <span style={{ color: T.textSecondary }}>Remember me</span>
-                </label>
-                <a href="#" style={{ fontWeight: 500, color: T.primary, textDecoration: 'none' }}>Forgot password?</a>
-              </div>
-
-              <Button type="submit" fullWidth size="lg" loading={loading} icon={LogIn}>
-                Sign In
+              <Button type="submit" fullWidth size="lg" loading={loading} icon={UserPlus} style={{ marginTop: '8px' }}>
+                Create Account
               </Button>
 
               <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px', color: T.textSecondary }}>
-                Don't have an account? {' '}
+                Already have an account? {' '}
                 <button 
                   type="button"
-                  onClick={() => navigate('/volunteer/signup')}
+                  onClick={() => navigate('/volunteer/login')}
                   style={{ background: 'none', border: 'none', color: T.primary, fontWeight: 600, cursor: 'pointer', padding: 0 }}
                 >
-                  Sign up
+                  Log in
                 </button>
               </div>
             </form>
@@ -153,7 +168,7 @@ export default function VolunteerLoginPage() {
               <Button 
                 variant="secondary" 
                 fullWidth 
-                onClick={handleGoogleLogin} 
+                onClick={handleGoogleSignup} 
                 loading={googleLoading}
                 icon={() => (
                   <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', marginRight: '8px' }}>
@@ -164,7 +179,7 @@ export default function VolunteerLoginPage() {
                   </svg>
                 )}
               >
-                Sign in with Google
+                Sign up with Google
               </Button>
             </div>
           </div>
